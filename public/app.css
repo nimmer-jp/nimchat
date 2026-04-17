@@ -1,0 +1,342 @@
+:root {
+  color-scheme: light;
+  --app-bg-strong: #0f172a;
+  --app-bg-mid: #1f2a44;
+  --app-surface: rgba(255, 255, 255, 0.92);
+  --app-border: rgba(148, 163, 184, 0.4);
+  --app-shadow: 0 22px 44px rgba(15, 23, 42, 0.18);
+  --app-text: #0f172a;
+  --app-muted: #475569;
+  --app-user-bubble: #0f62fe;
+  --app-assistant-bubble: #ffffff;
+  --app-system-bubble: #fff1f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--app-text);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(186, 230, 253, 0.8), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(199, 210, 254, 0.7), transparent 40%),
+    linear-gradient(120deg, var(--app-bg-strong), var(--app-bg-mid) 50%, #334155 100%);
+  font-family: "Inter", "Noto Sans JP", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  padding: 20px;
+}
+
+.app-frame {
+  margin: 0 auto;
+  max-width: 1200px;
+  min-height: calc(100vh - 40px);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 24px;
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.nimchat-shell {
+  min-height: calc(100vh - 40px);
+}
+
+.setup-view {
+  display: grid;
+  min-height: calc(100vh - 40px);
+  place-items: center;
+  padding: 24px;
+}
+
+.setup-card {
+  width: min(560px, 100%);
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 18px;
+  box-shadow: 0 20px 38px rgba(15, 23, 42, 0.14);
+  padding: 24px;
+  display: grid;
+  gap: 14px;
+}
+
+.setup-badge {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.setup-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  letter-spacing: -0.02em;
+}
+
+.setup-description {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.setup-form {
+  display: grid;
+  gap: 12px;
+}
+
+.setup-form .input {
+  width: 100%;
+}
+
+.setup-help {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+}
+
+.setup-skip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--app-muted);
+}
+
+.setup-error {
+  margin: 0;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.setup-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.setup-actions .btn {
+  min-width: 220px;
+}
+
+.chat-view {
+  display: grid;
+  grid-template-columns: minmax(250px, 290px) 1fr;
+  min-height: calc(100vh - 40px);
+}
+
+.chat-sidebar {
+  border-right: 1px solid var(--app-border);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.sidebar-header {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidebar-brand h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-meta {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
+.sidebar-action {
+  width: 100%;
+  justify-content: center;
+}
+
+.session-list {
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.session-item {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  padding: 10px 11px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.session-item:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.session-item.is-active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+}
+
+.session-title {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.chat-main {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+  background: #eef2ff;
+}
+
+.message-list {
+  padding: 18px;
+  overflow-y: auto;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.message-empty {
+  margin: 0;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 0.92rem;
+}
+
+.message-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.message-row.is-user {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: min(78ch, 100%);
+  border-radius: 16px;
+  padding: 11px 13px;
+  font-size: 0.94rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+.message-bubble.is-assistant {
+  background: var(--app-assistant-bubble);
+  border: 1px solid #dbeafe;
+  color: #1e293b;
+}
+
+.message-bubble.is-user {
+  background: var(--app-user-bubble);
+  border: 1px solid #1d4ed8;
+  color: #ffffff;
+}
+
+.message-bubble.is-system {
+  background: var(--app-system-bubble);
+  border: 1px solid #fecdd3;
+  color: #9f1239;
+}
+
+.composer-form {
+  border-top: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.composer-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 220px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  color: #0f172a;
+}
+
+.composer-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.composer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-status {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+}
+
+.send-action {
+  min-width: 92px;
+}
+
+@media (max-width: 920px) {
+  body {
+    padding: 10px;
+  }
+
+  .app-frame,
+  .nimchat-shell,
+  .chat-view,
+  .setup-view {
+    min-height: calc(100vh - 20px);
+  }
+
+  .chat-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .chat-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  .session-list {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(160px, 1fr);
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-content: stretch;
+  }
+}
