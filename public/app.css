@@ -170,6 +170,16 @@ body {
   justify-content: center;
 }
 
+.sidebar-action-danger {
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.sidebar-action-danger:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
 .session-list {
   padding: 10px;
   display: grid;

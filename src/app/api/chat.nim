@@ -136,19 +136,11 @@ proc buildEndpointCandidates(endpoint: string): seq[string] =
     let path = normalizedEndpointPath(parsed.path)
 
     if path == "/":
-      for routePath in [
-          "/v1/chat/completions",
-          "/chat/completions",
-          "/v1/completions",
-          "/completions",
-          "/"
-        ]:
-        result.addEndpointCandidate(endpointWithPath(parsed, routePath))
+      result.addEndpointCandidate(endpointWithPath(parsed, "/v1/chat/completions"))
       return
 
     if path == "/v1":
-      for routePath in ["/v1/chat/completions", "/v1/completions", "/v1"]:
-        result.addEndpointCandidate(endpointWithPath(parsed, routePath))
+      result.addEndpointCandidate(endpointWithPath(parsed, "/v1/chat/completions"))
       return
 
     result.addEndpointCandidate(endpointWithPath(parsed, path))
@@ -174,6 +166,37 @@ proc isLikelyMissingRoute(statusCode: int, responseBody: string): bool =
   if normalized.startsWith("<!doctype html") or normalized.startsWith("<html"):
     return normalized.contains("404")
   false
+
+proc truncateForDisplay(body: string, limit = 500): string =
+  let stripped = body.strip()
+  if stripped.len <= limit:
+    return stripped
+  stripped[0 ..< limit] & "... (truncated)"
+
+proc buildUpstreamErrorMessage(statusCode: int, model: string, responseBody: string): string =
+  let snippet = truncateForDisplay(responseBody)
+  let base = "LLMエンドポイントがステータス " & $statusCode & " を返しました。"
+  if snippet.len == 0:
+    return base & " モデル名とエンドポイントURLを確認してください。"
+
+  var hint = ""
+  let lowered = snippet.toLowerAscii()
+  let looksLikeHfLookup =
+    lowered.contains("huggingface") or
+    lowered.contains("repository not found") or
+    lowered.contains("repo_id")
+
+  if statusCode == 404 and looksLikeHfLookup and model.len > 0:
+    hint = " mlx_lm などのサーバーは 'model' 指定があると HuggingFace から取得を試みます。" &
+      "セットアップのモデル名を空欄にリセットするか、サーバー起動時に指定したモデルIDと完全一致させてください。"
+  elif statusCode == 404 and lowered.contains("model"):
+    hint = " モデル名がローカルLLMに読み込まれているものと一致しているか確認してください。"
+  elif statusCode == 404:
+    hint = " エンドポイントURLのパス（例: /v1/chat/completions）が正しいか確認してください。"
+  elif statusCode == 401 or statusCode == 403:
+    hint = " APIキーやアクセス制限の設定を確認してください。"
+
+  base & hint & " 応答: " & snippet
 
 proc requestOnce(endpoint, payload: string): tuple[statusCode: int, responseBody: string] =
   var client = newHttpClient(timeout = 120_000)
@@ -220,19 +243,33 @@ proc requestLocalLlm(endpoint, model, prompt, historyRaw: string): JsonNode =
     if statusCode < 200 or statusCode >= 300:
       return %*{
         "ok": false,
-        "error": "LLMエンドポイントがエラーを返しました。",
+        "error": buildUpstreamErrorMessage(statusCode, model, responseBody),
         "upstreamStatus": statusCode,
         "upstreamBody": responseBody,
         "triedEndpoints": triedEndpoints
       }
 
-    let parsed = parseJson(responseBody)
+    var parsed: JsonNode
+    try:
+      parsed = parseJson(responseBody)
+    except JsonParsingError:
+      return %*{
+        "ok": false,
+        "error": "LLMの応答がJSONではありません。応答の先頭: " &
+          truncateForDisplay(responseBody, 200),
+        "upstreamStatus": statusCode,
+        "upstreamBody": responseBody,
+        "triedEndpoints": triedEndpoints
+      }
+
     let assistant = extractAssistantText(parsed)
     if assistant.len == 0:
       return %*{
         "ok": false,
-        "error": "LLMレスポンス形式を解釈できませんでした。",
+        "error": "LLMレスポンス形式を解釈できませんでした。応答: " &
+          truncateForDisplay(responseBody, 300),
         "upstreamStatus": statusCode,
+        "upstreamBody": responseBody,
         "triedEndpoints": triedEndpoints
       }
 
@@ -243,7 +280,7 @@ proc requestLocalLlm(endpoint, model, prompt, historyRaw: string): JsonNode =
 
   %*{
     "ok": false,
-    "error": "LLMエンドポイントが見つかりませんでした。接続先URLを確認してください。",
+    "error": "LLMエンドポイントが見つかりませんでした。URLのパス（例: /v1/chat/completions）を確認してください。",
     "upstreamStatus": lastStatus,
     "upstreamBody": lastBody,
     "triedEndpoints": triedEndpoints

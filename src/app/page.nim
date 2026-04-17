@@ -9,6 +9,7 @@ const chatClientScript = """
   const STORAGE_SETUP = "nimchat.setup.v1";
   const STORAGE_SESSIONS = "nimchat.sessions.v1";
   const STORAGE_ACTIVE_SESSION = "nimchat.active-session.v1";
+  const STORAGE_KEYS = [STORAGE_SETUP, STORAGE_SESSIONS, STORAGE_ACTIVE_SESSION];
 
   const state = {
     setup: null,
@@ -30,6 +31,7 @@ const chatClientScript = """
   let ipBadge;
   let sessionList;
   let newSessionButton;
+  let resetButton;
   let messageList;
   let composerForm;
   let composerInput;
@@ -387,10 +389,42 @@ const chatClientScript = """
       composerInput.focus();
     });
 
+    resetButton.addEventListener("click", function () {
+      if (state.sending) {
+        return;
+      }
+      const confirmed = window.confirm(
+        "localStorage に保存された接続設定と会話履歴をすべて削除します。よろしいですか？"
+      );
+      if (!confirmed) {
+        return;
+      }
+      resetLocalStorage();
+    });
+
     composerForm.addEventListener("submit", function (event) {
       event.preventDefault();
       sendMessage();
     });
+  }
+
+  function resetLocalStorage() {
+    STORAGE_KEYS.forEach(function (key) {
+      try {
+        localStorage.removeItem(key);
+      } catch (_) {
+      }
+    });
+    state.setup = null;
+    state.sessions = [];
+    state.activeSessionId = "";
+    showSetupError("");
+    setupForm.reset();
+    setupSkipIpInput.checked = true;
+    setupIpAllowlistInput.disabled = true;
+    setupIpAllowlistInput.classList.add("is-disabled");
+    renderSetupVisibility(true);
+    setupEndpointInput.focus();
   }
 
   function renderSetupMeta() {
@@ -428,6 +462,7 @@ const chatClientScript = """
     ipBadge = byId("ip-badge");
     sessionList = byId("session-list");
     newSessionButton = byId("new-session-button");
+    resetButton = byId("reset-storage-button");
     messageList = byId("message-list");
     composerForm = byId("composer-form");
     composerInput = byId("composer-input");
@@ -437,7 +472,7 @@ const chatClientScript = """
     if (!setupView || !chatView || !setupForm || !setupError ||
         !setupEndpointInput || !setupModelInput || !setupSkipIpInput || !setupIpAllowlistInput ||
         !endpointBadge || !modelBadge || !ipBadge ||
-        !sessionList || !newSessionButton || !messageList ||
+        !sessionList || !newSessionButton || !resetButton || !messageList ||
         !composerForm || !composerInput || !composerStatus || !sendButton) {
       console.error("nimchat init failed: required DOM nodes are missing.");
       return;
@@ -500,6 +535,16 @@ proc page*(req: Request): string =
     outlined = true,
     attrs = @[("id", "new-session-button"), ("class", "sidebar-action")]
   )
+  let resetStorageButton = $Tiara.button(
+    "設定をリセット",
+    color = "secondary",
+    outlined = true,
+    attrs = @[
+      ("id", "reset-storage-button"),
+      ("class", "sidebar-action sidebar-action-danger"),
+      ("type", "button")
+    ]
+  )
   let sendButton = $Tiara.button(
     "送信",
     buttonType = "submit",
@@ -556,6 +601,7 @@ proc page*(req: Request): string =
             <p id="model-badge" class="sidebar-meta"></p>
             <p id="ip-badge" class="sidebar-meta"></p>
             {newSessionButton}
+            {resetStorageButton}
           </div>
           <nav id="session-list" class="session-list"></nav>
         </aside>
