@@ -129,6 +129,40 @@ const chatClientScript = """
     return "session-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   }
 
+  var markdownOptionsApplied = false;
+
+  function assistantMarkdownToSafeHtml(text) {
+    var raw = String(text || "");
+    if (!raw) {
+      return "";
+    }
+    var parse =
+      typeof marked !== "undefined" && typeof marked.parse === "function"
+        ? marked.parse.bind(marked)
+        : typeof marked === "function"
+          ? marked
+          : null;
+    var purify = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize : null;
+    if (!parse || !purify) {
+      return null;
+    }
+    if (!markdownOptionsApplied && typeof marked.setOptions === "function") {
+      try {
+        marked.setOptions({
+          mangle: false,
+          headerIds: false
+        });
+      } catch (_) {
+      }
+      markdownOptionsApplied = true;
+    }
+    var html = parse(raw);
+    if (typeof html !== "string") {
+      return null;
+    }
+    return purify(html, { USE_PROFILES: { html: true } });
+  }
+
   function deriveSessionTitle(text) {
     const normalized = String(text || "").trim();
     if (!normalized) {
@@ -236,7 +270,17 @@ const chatClientScript = """
       } else {
         bubble.classList.add("is-user");
       }
-      bubble.textContent = message.content;
+      if (message.role === "assistant") {
+        var safeHtml = assistantMarkdownToSafeHtml(message.content);
+        if (safeHtml !== null) {
+          bubble.classList.add("is-markdown");
+          bubble.innerHTML = safeHtml;
+        } else {
+          bubble.textContent = message.content;
+        }
+      } else {
+        bubble.textContent = message.content;
+      }
 
       row.appendChild(bubble);
       messageList.appendChild(row);
@@ -406,6 +450,20 @@ const chatClientScript = """
       event.preventDefault();
       sendMessage();
     });
+
+    composerInput.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter") {
+        return;
+      }
+      if (!event.metaKey && !event.ctrlKey) {
+        return;
+      }
+      if (state.sending) {
+        return;
+      }
+      event.preventDefault();
+      sendMessage();
+    });
   }
 
   function resetLocalStorage() {
@@ -453,10 +511,10 @@ const chatClientScript = """
     chatView = byId("chat-view");
     setupForm = byId("setup-form");
     setupError = byId("setup-error");
-    setupEndpointInput = byId("setup-endpoint-input") || byId("tiara-setup-endpoint");
-    setupModelInput = byId("setup-model-input") || byId("tiara-setup-model");
+    setupEndpointInput = byId("tiara-setup-endpoint");
+    setupModelInput = byId("tiara-setup-model");
     setupSkipIpInput = byId("setup-skip-ip");
-    setupIpAllowlistInput = byId("setup-ip-allowlist");
+    setupIpAllowlistInput = byId("tiara-setup-ip-allowlist");
     endpointBadge = byId("endpoint-badge");
     modelBadge = byId("model-badge");
     ipBadge = byId("ip-badge");
@@ -518,6 +576,14 @@ proc page*(req: Request): string =
     placeholder = "例: qwen2.5-coder:7b",
     attrs = @[("autocomplete", "off")]
   )
+  let ipAllowlistInput = $Tiara.textarea(
+    name = "setup_ip_allowlist",
+    label = "許可IPアドレス (カンマ区切り)",
+    placeholder = "127.0.0.1, ::1, localhost",
+    required = false,
+    rows = 3,
+    attrs = @[("class", "input")]
+  )
   let setupSubmitButton = $Tiara.button(
     "設定を保存して開始",
     buttonType = "submit"
@@ -564,17 +630,8 @@ proc page*(req: Request): string =
           <form id="setup-form" class="setup-form">
             {endpointInput}
             {modelInput}
-
-            <div class="field">
-              <label for="setup-ip-allowlist" class="field-label">許可IPアドレス (カンマ区切り)</label>
-              <textarea
-                id="setup-ip-allowlist"
-                class="input"
-                rows="3"
-                placeholder="127.0.0.1, ::1, localhost"
-              ></textarea>
-              <p class="setup-help">例: <code>127.0.0.1, ::1, localhost</code>。スキップ時は未入力のままで問題ありません。</p>
-            </div>
+            {ipAllowlistInput}
+            <p class="setup-help">例: <code>127.0.0.1, ::1, localhost</code>。スキップ時は未入力のままで問題ありません。</p>
 
             <label class="setup-skip-row">
               <input id="setup-skip-ip" type="checkbox" checked>

@@ -14,18 +14,34 @@ Nim + Crown + Tiara で作った、ローカルLLM向けの軽量チャットア
 
 ## 起動
 
-ローカルの `../crown` / `../tiara` を `nim.cfg` 経由で参照しています。
+1. このリポジトリの依存（Basolato / Tiara）をインストールします。
 
 ```bash
-../crown/crown dev
+nimble install -y
+```
+
+2. **Crown**（`crown` CLI と `import crown/core` 用ライブラリ）は別途 Nimble で入れます（Crown 公式の `crown init` と同様、`crown.nimble` 名の都合でフレームワーク本体はここでは宣言しません）。
+
+```bash
+nimble install -y https://github.com/nimmer-jp/crown#head
+```
+
+3. 開発サーバー:
+
+```bash
+crown dev
 ```
 
 本番ビルド:
 
 ```bash
-../crown/crown build
+crown build
 ./.crown/main
 ```
+
+Tiara を Git の `main` 追従にしているため、古いキャッシュでビルドエラーになる場合は `~/.nimble/pkgcache` 内の `githubcom_nimmerjptiara_#main` を削除してから `nimble install -y` をやり直してください。
+
+`nim.cfg` では Basolato v0.15 系を `$home/.nimble/pkgcache/...` から先に読み込むよう固定しています（Nim 2.2.8 との組み合わせ向け）。理由は [`docs/crown-notes.md`](./docs/crown-notes.md) を参照してください。
 
 デフォルトは `http://127.0.0.1:8080` で起動します。
 
@@ -81,6 +97,6 @@ nimchat の初回セットアップでは次のように入力します。
 
 ## 補足
 
-- Nim 2.2.8 では `crown dev --incremental:on` で `=copy operator not found for type string` の内部エラーが出る場合があるため、`crown.json` に `"devIncremental": false` を設定しています。
-- Crown 向けの改善メモ: [`docs/crown-notes.md`](./docs/crown-notes.md)
-- Tiara 向けの改善メモ: [`docs/tiara-notes.md`](./docs/tiara-notes.md)
+- Nim 2.2.8 では `crown dev` の incremental コンパイルで内部エラーが出ることがあるため、`crown.json` に `"devIncremental": false` を設定しています。
+- Crown 連携メモ（依存の取り込み・履歴）: [`docs/crown-notes.md`](./docs/crown-notes.md)
+- Tiara 連携メモ: [`docs/tiara-notes.md`](./docs/tiara-notes.md)
