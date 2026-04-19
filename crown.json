@@ -2,5 +2,8 @@
   "port": 8080,
   "devIncremental": false,
   "tailwind": false,
-  "pwa": false
+  "pwa": false,
+  "frontend": {
+    "enabled": false
+  }
 }

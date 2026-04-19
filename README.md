@@ -41,7 +41,7 @@ crown build
 
 Tiara を Git の `main` 追従にしているため、古いキャッシュでビルドエラーになる場合は `~/.nimble/pkgcache` 内の `githubcom_nimmerjptiara_#main` を削除してから `nimble install -y` をやり直してください。
 
-`nim.cfg` では Basolato v0.15 系を `$home/.nimble/pkgcache/...` から先に読み込むよう固定しています（Nim 2.2.8 との組み合わせ向け）。理由は [`docs/crown-notes.md`](./docs/crown-notes.md) を参照してください。
+`nim.cfg` では Basolato v0.15 系を `$home/.nimble/pkgcache/...` から先に読み込みます（Nim 2.2.8 と Basolato 0.16 系の組み合わせで出るコンパイルエラーを避けるため）。
 
 デフォルトは `http://127.0.0.1:8080` で起動します。
 
@@ -98,5 +98,3 @@ nimchat の初回セットアップでは次のように入力します。
 ## 補足
 
 - Nim 2.2.8 では `crown dev` の incremental コンパイルで内部エラーが出ることがあるため、`crown.json` に `"devIncremental": false` を設定しています。
-- Crown 連携メモ（依存の取り込み・履歴）: [`docs/crown-notes.md`](./docs/crown-notes.md)
-- Tiara 連携メモ: [`docs/tiara-notes.md`](./docs/tiara-notes.md)
