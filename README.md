@@ -14,17 +14,41 @@ Nim + Crown + Tiara で作った、ローカルLLM向けの軽量チャットア
 
 ## 起動
 
-1. このリポジトリの依存（Basolato / Tiara）をインストールします。
+前提: **Crown 0.4.6 以上**（Basolato **0.15 / 0.16** 両対応は Crown 側の対応範囲）、**Nim 2.2.8**（`crown.nimble` の `requires` に合わせる）。このリポジトリでは Basolato を **`#v0.15.0`** に固定しています（`crown.nimble` を編集すれば 0.16 系タグに切り替え可能）。
+
+1. 依存をインストールします。
+
+**`nimble install` だけで** Basolato の `ducere` ビルドが **`system module needs: nimSubInt`** で落ちる場合があります。ログに `compiling nim package using .../pkgs2/nim-2.2.8-.../bin/nim` と出ていれば、**Nimble が管理する `bin/nim` が、同梱の 2.2.8 ソースツリーと一致していない**（例: 実体が古い 1.9.1 のまま）ことがあります。**Crown / Basolato の不具合ではありません。**
+
+対処の優先度の目安:
+
+1. **根本（同じ 2.2.8 を使い続ける）**: すでに **choosenim 等で正しい Nim 2.2.8** があるなら、その `bin/nim` で Nimble のコピーを上書きする。
 
 ```bash
-nimble install -y
+# 例: choosenim のツールチェーン（`nim -v` が 2.2.8 であることを確認）
+GOOD_NIM="$HOME/.choosenim/toolchains/nim-2.2.8/bin/nim"
+for d in "$HOME/.nimble/nimbinaries/nim-2.2.8" "$HOME"/.nimble/pkgs2/nim-2.2.8-*; do
+  [ -f "$d/bin/nim" ] && cp -f "$GOOD_NIM" "$d/bin/nim" && chmod u+x "$d/bin/nim"
+done
 ```
 
-2. **Crown**（`crown` CLI と `import crown/core` 用ライブラリ）は別途 Nimble で入れます（Crown 公式の `crown init` と同様、`crown.nimble` 名の都合でフレームワーク本体はここでは宣言しません）。
+その後、通常どおり `nimble install -y` でよいです。`nimbinaries` / `pkgs2` の **`bin/nim --version`** が **2.2.8** になっていることを確認してください。
+
+2. **回避**: 毎回システムの Nim で依存だけビルドする。
 
 ```bash
-nimble install -y https://github.com/nimmer-jp/crown#head
+nimble --useSystemNim install -y
 ```
+
+3. **再ダウンロードだけでは直らないことがある**: `pkgs2` を消しても、Nimble が `nimbinaries` から同じ壊れたバイナリを戻す場合があります。そのときは **(1) の上書き**か **`--useSystemNim`** を使ってください。
+
+2. **Crown**（`crown` CLI）は Nimble で入れます（未インストールなら）。
+
+```bash
+nimble install -y crown@0.4.6
+```
+
+（上記 (1) 未実施で `nimble` 用 Nim が壊れている場合は、`nimble --useSystemNim install -y crown@0.4.6` でも可。）
 
 3. 開発サーバー:
 
@@ -41,7 +65,14 @@ crown build
 
 Tiara を Git の `main` 追従にしているため、古いキャッシュでビルドエラーになる場合は `~/.nimble/pkgcache` 内の `githubcom_nimmerjptiara_#main` を削除してから `nimble install -y` をやり直してください。
 
-`nim.cfg` では Basolato v0.15 系を `$home/.nimble/pkgcache/...` から先に読み込みます（Nim 2.2.8 と Basolato 0.16 系の組み合わせで出るコンパイルエラーを避けるため）。
+`nim.cfg` では `-d:httpbeast` のほか、**`pkgcache` の Basolato v0.15.0 を `--path` で先に通す**設定にしています。これが無いと、マシンに **別プロジェクト用の `basolato-0.16.x` が `~/.nimble/pkgs2` に残っている**だけで、`crown dev` が **0.16.1 を import** し、**`createResponse` / GC-safety** で落ちます。`nimble --useSystemNim install` は **ducere 用に 0.15 の pkgcache を使う**だけで、アプリ本体のコンパイル経路は別なので、この現象は **「Nimble のオプションを付けても直らない」ように見える**ことがあります。
+
+### ビルドが止まるとき（参考）
+
+- **`nimSubInt`（`nimble install` 時）**: **Nimble の `pkgs2` / `nimbinaries` 内 Nim** と lib の取り違え。上記「起動」の手順か `--useSystemNim`。
+- **`createResponse` / GC-safety（`crown dev` 時）**: 多くは **Basolato 0.16.x が解決されている**ことが原因。`nim.cfg` の **`#v0.15.0` の `--path`** を確認するか、一時的に `pkgs2` の `basolato-0.16.*` を整理する。
+
+> **補足**: `crown.nimble` というファイル名のため、Nimble 上のパッケージ名は `crown` と表示されます。依存の **フレームワーク Crown**（`requires "crown >= 0.4.6"`）と名前が重なって紛らわしい点だけご注意ください。
 
 デフォルトは `http://127.0.0.1:8080` で起動します。
 

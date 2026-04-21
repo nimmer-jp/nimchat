@@ -4,7 +4,8 @@ description   = "Chat app built with Crown and Tiara"
 license       = "MIT"
 srcDir        = "src"
 
-requires "nim >= 2.2.0"
+requires "nim >= 2.2.8"
 requires "https://github.com/itsumura-h/nim-basolato#v0.15.0"
-requires "https://github.com/nimmer-jp/tiara#main"
+requires "tiara >= 0.1.0"
+requires "crown >= 0.4.6"
 
