@@ -1,4 +1,4 @@
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "nimchat contributors"
 description   = "Chat app built with Crown and Tiara"
 license       = "MIT"
@@ -7,5 +7,4 @@ srcDir        = "src"
 requires "nim >= 2.2.8"
 requires "https://github.com/itsumura-h/nim-basolato#v0.15.0"
 requires "tiara >= 0.1.0"
-requires "crown >= 0.4.6"
-
+requires "crown >= 0.5.0"

@@ -3,3 +3,9 @@ nimcache/
 logs/
 .env
 .DS_Store
+
+.midnote/
+
+# midnote tracked markdown
+SPEC.md
+# end midnote tracked markdown
